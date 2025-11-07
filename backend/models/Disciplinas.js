@@ -1,39 +1,48 @@
-import { DataTypes } from 'sequelize'
-import db from '../db/db.js'
-import Professores from './Professores.js'
+import { DataTypes } from "sequelize";
+import db from "../db/db.js";
+import Professores from "./Professores.js";
+import Matriculas from "./Matriculas.js";
 
-const Disciplinas = db.define('disciplinas', {
+const Disciplinas = db.define(
+  "disciplinas",
+  {
     ID: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        allowNull: false,
-        primaryKey: true,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      allowNull: false,
+      primaryKey: true,
     },
     nome_disciplina: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
+      type: DataTypes.STRING(100),
+      allowNull: false,
     },
     professor_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: Professores,
-            key: "ID",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
-    }
-}, {
-    tableName: 'disciplinas',
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: Professores,
+        key: "ID",
+      },
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
+    },
+  },
+  {
+    tableName: "disciplinas",
     timestamps: false, // <<< DESATIVA createdAt e updatedAt
-})
+  }
+);
 
 Disciplinas.belongsTo(Professores, {
-    foreignKey: "professor_id",
-})
+  foreignKey: "professor_id",
+});
 
 Professores.hasMany(Disciplinas, {
-    foreignKey: "professor_id",
-})
+  foreignKey: "professor_id",
+});
 
-export default Disciplinas
+Disciplinas.hasMany(Matriculas, {
+  foreignKey: "disciplina_id",
+});
+
+export default Disciplinas;
