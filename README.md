@@ -1,4 +1,4 @@
-# Planejamento do projeto
+# Projeto Portal do Aluno (em andamento)
 
 ### **1. Planejamento e Modelagem**
 
