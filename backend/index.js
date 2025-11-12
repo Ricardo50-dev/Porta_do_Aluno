@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import UserRoutes from './routes/UserRoutes.js';
+import router from "./routes/AdminRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(cors({ credentials: true, origin: `http://localhost:${port_app}` }));
 
 //Routes
-app.use('/users', UserRoutes)
+app.use("/users", router);
 // app.use('/training', TrainingRoutes)
 // app.use('/diet', DietRoutes)
 
