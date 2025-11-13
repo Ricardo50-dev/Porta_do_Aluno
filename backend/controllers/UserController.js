@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import Professor from "../models/Professores.js";
 import bcrypt from "bcryptjs";
 import Logger from "../db/logger.js";
 import createUserToken from "../helpers/create-user-token.js";
@@ -73,6 +74,32 @@ export default class UserController {
 
     try {
       const newUser = await user.save();
+      if (typeUser == "professor") {
+        const user_id = newUser.ID;
+        const departamento = req.body.departamento;
+
+        // check if professor exists
+        const professorExists = await Professor.findOne({ where: { usuario_id: user_id } });
+        if (professorExists) {
+          res.status(422).json({
+            message: "Erro ao cadastrar professor!",
+          });
+          Logger.error(`Usuario_id já utilizado: ${error}`);
+          return;
+        }
+        const professor = new Professor({
+          usuario_id: user_id,
+          departamento: departamento,
+        });
+
+        try {
+          const newProfessor = await professor.save();
+        } catch (error) {
+          Logger.error(`Erro ao criar professor no banco: ${error}`);
+          res.status(500).json({ message: error });
+        }
+
+      }
       await createUserToken(newUser, req, res);
     } catch (error) {
       Logger.error(`Erro ao criar user no banco: ${error}`);
