@@ -2,7 +2,7 @@ import { DataTypes } from "sequelize";
 import db from "../db/db.js";
 import User from "./User.js";
 import Turma from "./Turma.js";
-import Matriculas from "./Matriculas.js";
+//import Matriculas from "./Matriculas.js";
 
 const Aluno = db.define(
   "alunos",
@@ -60,8 +60,8 @@ User.hasOne(Aluno, {
   foreignKey: "usuario_id",
 });
 
-Aluno.hasMany(Matriculas, {
-  foreignKey: "aluno_id",
-});
+//Aluno.hasMany(Matriculas, {
+//  foreignKey: "aluno_id",
+//});
 
 export default Aluno;

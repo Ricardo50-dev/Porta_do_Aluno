@@ -1,11 +1,13 @@
 import User from "../models/User.js";
 import Professor from "../models/Professores.js";
+import Aluno from "../models/Aluno.js";
 import bcrypt from "bcryptjs";
 import Logger from "../db/logger.js";
 import createUserToken from "../helpers/create-user-token.js";
 import getToken from "../helpers/get-token.js";
 import jwt from "jsonwebtoken";
 import getUserByToken from "../helpers/get-user-by-token.js";
+import Turma from "../models/Turma.js";
 
 export default class UserController {
   static async register(req, res) {
@@ -79,7 +81,9 @@ export default class UserController {
         const departamento = req.body.departamento;
 
         // check if professor exists
-        const professorExists = await Professor.findOne({ where: { usuario_id: user_id } });
+        const professorExists = await Professor.findOne({
+          where: { usuario_id: user_id },
+        });
         if (professorExists) {
           res.status(422).json({
             message: "Erro ao cadastrar professor!",
@@ -98,8 +102,54 @@ export default class UserController {
           Logger.error(`Erro ao criar professor no banco: ${error}`);
           res.status(500).json({ message: error });
         }
+      } else if (typeUser == "aluno") {
+        const user_id = newUser.ID;
+        const matricula = req.body.matricula;
+        const turma_id = req.body.turma;
 
+        if (!matricula) {
+          res.status(422).json({ message: "A matricula é obrigatória!" });
+          return;
+        }
+
+        if (!turma_id) {
+          res.status(422).json({ message: "A turma é obrigatória!" });
+          return;
+        }
+
+        const turmaExists = await Turma.findOne({ where: { ID: turma_id } });
+        if (!turmaExists) {
+          res.status(422).json({
+            message: "Erro ao cadastrar aluno!",
+          });
+          Logger.error(`Turma não encontrada: ${error}`);
+          return;
+        }
+
+        const alunoExists = await Aluno.findOne({
+          where: { usuario_id: user_id },
+        });
+        if (alunoExists) {
+          res.status(422).json({
+            message: "Erro ao cadastrar aluno!",
+          });
+          Logger.error(`Usuario_id já utilizado: ${error}`);
+          return;
+        }
+        const aluno = new Aluno({
+          usuario_id: user_id,
+          matricula: matricula,
+          turma_id: turma_id,
+        });
+
+        try {
+          const newAluno = await aluno.save();
+        } catch (error) {
+          Logger.error(`Erro ao criar aluno no banco: ${error}`);
+          res.status(500).json({ message: error });
+        }
       }
+
       await createUserToken(newUser, req, res);
     } catch (error) {
       Logger.error(`Erro ao criar user no banco: ${error}`);
