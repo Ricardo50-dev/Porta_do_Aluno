@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import router from "./routes/AdminRoutes.js";
-import routerL from "./routes/GeneralRoutes.js";
+import routerLogin from "./routes/GeneralRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -16,7 +16,7 @@ app.use(cors({ credentials: true, origin: `http://localhost:${port_app}` }));
 
 //Routes
 app.use("/users", router);
-app.use("/login", routerL);
+app.use("/", routerLogin);
 // app.use('/diet', DietRoutes)
 
 app.listen(port_server);
