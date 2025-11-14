@@ -231,14 +231,14 @@ export default class UserController {
     }
 
     if (user.tipo == "aluno") {
-      const aluno = await Aluno.findOne({ where: { usuario_id: user.ID } })
+      const aluno = await Aluno.findOne({ where: { usuario_id: user.ID } });
       res.status(200).json({ user, aluno });
-    }
-    else if (user.tipo == "professor") {
-      const professor = await Professor.findOne({ where: { usuario_id: user.ID } })
+    } else if (user.tipo == "professor") {
+      const professor = await Professor.findOne({
+        where: { usuario_id: user.ID },
+      });
       res.status(200).json({ user, professor });
-    }
-    else {
+    } else {
       res.status(200).json({ user });
     }
   }
@@ -248,10 +248,7 @@ export default class UserController {
 
     const user = await getUserByToken(token);
 
-    console.log(user);
-
     const nome = req.body.nome;
-    console.log(nome);
     const senha_hash = req.body.senha;
     const senha_hash_rep = req.body.senhaconfirm;
     const tipo = req.body.tipo;
