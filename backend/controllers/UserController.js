@@ -80,6 +80,11 @@ export default class UserController {
         const user_id = newUser.ID;
         const departamento = req.body.departamento;
 
+        if (!departamento) {
+          res.status(422).json({ message: "O departamento é obrigatório!" });
+          return;
+        }
+
         // check if professor exists
         const professorExists = await Professor.findOne({
           where: { usuario_id: user_id },
@@ -88,7 +93,7 @@ export default class UserController {
           res.status(422).json({
             message: "Erro ao cadastrar professor!",
           });
-          Logger.error(`Usuario_id já utilizado: ${error}`);
+          Logger.error(`Usuario_id já utilizado: ${user_id}`);
           return;
         }
         const professor = new Professor({
@@ -122,7 +127,7 @@ export default class UserController {
           res.status(422).json({
             message: "Erro ao cadastrar aluno!",
           });
-          Logger.error(`Turma não encontrada: ${error}`);
+          Logger.error(`Turma não encontrada com o ID: ${turma_id}`);
           return;
         }
 
@@ -133,7 +138,7 @@ export default class UserController {
           res.status(422).json({
             message: "Erro ao cadastrar aluno!",
           });
-          Logger.error(`Usuario_id já utilizado: ${error}`);
+          Logger.error(`Usuario_id já utilizado: ${user_id}`);
           return;
         }
         const aluno = new Aluno({
