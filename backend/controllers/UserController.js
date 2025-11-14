@@ -81,6 +81,7 @@ export default class UserController {
         const departamento = req.body.departamento;
 
         if (!departamento) {
+          await User.destroy({ where: {ID: user_id}})
           res.status(422).json({ message: "O departamento é obrigatório!" });
           return;
         }
@@ -90,6 +91,7 @@ export default class UserController {
           where: { usuario_id: user_id },
         });
         if (professorExists) {
+          await User.destroy({ where: {ID: user_id}})
           res.status(422).json({
             message: "Erro ao cadastrar professor!",
           });
@@ -104,6 +106,7 @@ export default class UserController {
         try {
           const newProfessor = await professor.save();
         } catch (error) {
+          await User.destroy({ where: {ID: user_id}})
           Logger.error(`Erro ao criar professor no banco: ${error}`);
           res.status(500).json({ message: error });
         }
@@ -113,17 +116,20 @@ export default class UserController {
         const turma_id = req.body.turma;
 
         if (!matricula) {
+          await User.destroy({ where: {ID: user_id}})
           res.status(422).json({ message: "A matricula é obrigatória!" });
           return;
         }
 
         if (!turma_id) {
+          await User.destroy({ where: {ID: user_id}})
           res.status(422).json({ message: "A turma é obrigatória!" });
           return;
         }
 
         const turmaExists = await Turma.findOne({ where: { ID: turma_id } });
         if (!turmaExists) {
+          await User.destroy({ where: {ID: user_id}})
           res.status(422).json({
             message: "Erro ao cadastrar aluno!",
           });
@@ -135,6 +141,7 @@ export default class UserController {
           where: { usuario_id: user_id },
         });
         if (alunoExists) {
+          await User.destroy({ where: {ID: user_id}})
           res.status(422).json({
             message: "Erro ao cadastrar aluno!",
           });
@@ -150,6 +157,7 @@ export default class UserController {
         try {
           const newAluno = await aluno.save();
         } catch (error) {
+          await User.destroy({ where: {ID: user_id}})
           Logger.error(`Erro ao criar aluno no banco: ${error}`);
           res.status(500).json({ message: error });
         }
