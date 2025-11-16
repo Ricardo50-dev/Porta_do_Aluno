@@ -74,12 +74,16 @@ export default class UserController {
       tipo: typeUser,
     });
 
+    // save user on db
     try {
       const newUser = await user.save();
+
+      // check type user
       if (typeUser == "professor") {
         const user_id = newUser.ID;
         const departamento = req.body.departamento;
 
+        // validation
         if (!departamento) {
           await User.destroy({ where: { ID: user_id } });
           res.status(422).json({ message: "O departamento é obrigatório!" });
@@ -103,6 +107,7 @@ export default class UserController {
           departamento: departamento,
         });
 
+        // save professor on db
         try {
           const newProfessor = await professor.save();
         } catch (error) {
@@ -115,6 +120,7 @@ export default class UserController {
         const matricula = req.body.matricula;
         const turma_id = req.body.turma;
 
+        // validations
         if (!matricula) {
           await User.destroy({ where: { ID: user_id } });
           res.status(422).json({ message: "A matricula é obrigatória!" });
@@ -127,6 +133,7 @@ export default class UserController {
           return;
         }
 
+        // check if turma exists
         const turmaExists = await Turma.findOne({ where: { ID: turma_id } });
         if (!turmaExists) {
           await User.destroy({ where: { ID: user_id } });
@@ -137,9 +144,12 @@ export default class UserController {
           return;
         }
 
+        // finding student on db
         const alunoExists = await Aluno.findOne({
           where: { usuario_id: user_id },
         });
+
+        // check if student exists
         if (alunoExists) {
           await User.destroy({ where: { ID: user_id } });
           res.status(422).json({
@@ -154,6 +164,7 @@ export default class UserController {
           turma_id: turma_id,
         });
 
+        // save student on db
         try {
           const newAluno = await aluno.save();
         } catch (error) {
@@ -174,6 +185,7 @@ export default class UserController {
     const email = req.body.email;
     const password = req.body.password;
 
+    // validations
     if (!email) {
       res.status(422).json({ message: "O e-mail é obrigatório!" });
       return;
@@ -206,6 +218,7 @@ export default class UserController {
   static async checkUser(req, res) {
     let currentUser;
 
+    // check user authorization
     if (req.headers.authorization) {
       const token = getToken(req);
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -222,14 +235,17 @@ export default class UserController {
   static async getUserById(req, res) {
     const id = req.params.id;
 
+    // search for user on db
     const user = await User.findOne({ where: { email: id } });
     user.senha_hash = undefined;
 
+    // validation
     if (!user) {
       res.status(422).json({ message: "Usuário não encontrado!" });
       return;
     }
 
+    // check user type
     if (user.tipo == "aluno") {
       const aluno = await Aluno.findOne({ where: { usuario_id: user.ID } });
       res.status(200).json({ user, aluno });
@@ -314,13 +330,17 @@ export default class UserController {
 
   static async deleteUser(req, res) {
     const id = req.params.id;
+
+    // search for user on db
     const user = await User.findOne({ where: { ID: id } });
 
+    // validation
     if (!user) {
       res.status(404).json({ message: "Usuário não encontrado!" });
       return;
     }
 
+    // delete user
     try {
       await User.destroy({ where: { ID: id } });
       res.status(200).json({ message: "Usuário removido com sucesso!" });
@@ -334,6 +354,7 @@ export default class UserController {
     const name = req.body.name;
     const ano = req.body.ano;
 
+    // validations
     if (!name) {
       res.status(422).json({ message: "O nome da turma é obrigatório!" });
       return;
@@ -344,8 +365,8 @@ export default class UserController {
       return;
     }
 
+    // check if turma exists
     const turmaExists = await Turma.findOne({ where: { nome_turma: name } });
-
     if (turmaExists) {
       res.status(422).json({
         message: "Por favor, utilize outro nome. Este já foi cadastrado!",
@@ -356,6 +377,8 @@ export default class UserController {
       nome_turma: name,
       ano_letivo: ano,
     });
+
+    // save turma on db
     try {
       const newTurma = await turma.save();
       res.json({ message: "A turma foi cadastrada com sucesso!" });
