@@ -20,6 +20,7 @@
 - `Frequencia`: (ID, aluno_id, disciplina_id, data, presente [booleano])
 - `MateriaisAula`: (ID, disciplina_id, titulo, descricao, arquivo_url)
 - `Avisos`: (ID, autor_id [professor ou admin], titulo, conteudo, data_postagem)
+- `Professor_turma`: (Tabela de ligação/junção: professor_id, turma_id)
 
 ---
 
