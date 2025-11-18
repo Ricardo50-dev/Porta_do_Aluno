@@ -8,6 +8,7 @@ import getToken from "../helpers/get-token.js";
 import jwt from "jsonwebtoken";
 import getUserByToken from "../helpers/get-user-by-token.js";
 import Turma from "../models/Turma.js";
+import sequelize from "../db/db.js";
 
 export default class AdminController {
   static async register(req, res) {
@@ -226,10 +227,7 @@ export default class AdminController {
   }
 
   static async editUser(req, res) {
-    const token = getToken(req);
-
-    const user = await getUserByToken(token);
-
+    const usuario_id = req.body.iduser;
     const nome = req.body.nome;
     const senha_hash = req.body.senha;
     const senha_hash_rep = req.body.senhaconfirm;
@@ -240,8 +238,6 @@ export default class AdminController {
       res.status(422).json({ message: "O nome é obrigatório!" });
       return;
     }
-
-    user.nome = nome;
 
     if (!senha_hash) {
       res.status(422).json({ message: "A senha é obrigatório!" });
@@ -260,8 +256,6 @@ export default class AdminController {
       return;
     }
 
-    user.tipo = tipo;
-
     if (senha_hash != senha_hash_rep) {
       res
         .status(422)
@@ -272,25 +266,119 @@ export default class AdminController {
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(senha_hash, salt);
 
-    user.senha_hash = passwordHash;
+    if (tipo == "aluno") {
+      const t = await sequelize.transaction();
+      const matricula = req.body.matricula
+      const turma_id = req.body.turmaid
+      // validations
+      if (!matricula) {
+        res.status(422).json({ message: "A matricula é obrigatória!" });
+        return;
+      }
 
-    try {
-      const updateUser = await User.update(
-        {
-          nome: user.nome,
-          senha_hash: user.senha_hash,
-          tipo: user.tipo,
-        },
-        {
-          where: { email: user.email }, // IMPORTANTE: Atualiza pelo id do usuário
-        }
-      );
-      res.json({
-        message: "Usuário atualizado com sucesso!",
-      });
-    } catch (error) {
-      Logger.error(`Erro ao atualizar user no banco: ${error}`);
-      res.status(500).json({ message: error });
+      if (!turma_id) {
+        res.status(422).json({ message: "A turma é obrigatória!" });
+        return;
+      }
+      // check if turma exists
+      const turmaExists = await Turma.findOne({ where: { ID: turma_id } });
+      if (!turmaExists) {
+        res.status(422).json({
+          message: "Erro ao cadastrar aluno!",
+        });
+        Logger.error(`Turma não encontrada com o ID: ${turma_id}`);
+        return;
+      }
+      try {
+        const updateUser = await User.update(
+          {
+            nome: nome,
+            senha_hash: passwordHash,
+          },
+          {
+            where: { ID: usuario_id }, // IMPORTANTE: Atualiza pelo id do usuário
+            transaction: t, // importante!
+          }
+        );
+
+        const updateAluno = await Aluno.update(
+          {
+            matricula: matricula,
+            turma_id: turma_id,
+          },
+          {
+            where: { usuario_id: usuario_id }, // IMPORTANTE: Atualiza pelo id do usuário
+            transaction: t, // importante!
+          }
+        );
+        // Se tudo deu certo:
+        await t.commit();
+        res.json({
+          message: "Usuário atualizado com sucesso!",
+        });
+      } catch (error) {
+        Logger.error(`Erro ao atualizar user no banco: ${error}`);
+        res.status(500).json({ message: error });
+      }
+
+
+
+    } else if (tipo == "professor") {
+      const t = await sequelize.transaction();
+      const departamento = req.body.departamento
+      // validation
+      if (!departamento) {
+        res.status(422).json({ message: "O departamento é obrigatório!" });
+        return;
+      }
+
+      try {
+        const updateUser = await User.update(
+          {
+            nome: nome,
+            senha_hash: passwordHash,
+          },
+          {
+            where: { ID: usuario_id }, // IMPORTANTE: Atualiza pelo id do usuário
+            transaction: t, // importante!
+          }
+        );
+        const updateProfessor = await Professor.update(
+          {
+            departamento: departamento,
+          },
+          {
+            where: { usuario_id: usuario_id }, // IMPORTANTE: Atualiza pelo id do usuário
+            transaction: t, // importante!
+          }
+        );
+        // Se tudo deu certo:
+        await t.commit();
+        res.json({
+          message: "Usuário atualizado com sucesso!",
+        });
+      } catch (error) {
+        Logger.error(`Erro ao atualizar user no banco: ${error}`);
+        res.status(500).json({ message: error });
+      }
+    } else {
+      try {
+        const updateUser = await User.update(
+          {
+            nome: nome,
+            senha_hash: passwordHash,
+          },
+          {
+            where: { ID: usuario_id }, // IMPORTANTE: Atualiza pelo id do usuário
+          }
+        );
+        res.json({
+          message: "Usuário atualizado com sucesso!",
+        });
+      } catch (error) {
+        Logger.error(`Erro ao atualizar user no banco: ${error}`);
+        res.status(500).json({ message: error });
+      }
     }
   }
 
