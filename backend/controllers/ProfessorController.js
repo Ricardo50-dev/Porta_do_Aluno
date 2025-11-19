@@ -5,10 +5,13 @@ import bcrypt from "bcryptjs";
 // import Logger from "../db/logger.js";
 // import createUserToken from "../helpers/create-user-token.js";
 import getToken from "../helpers/get-token.js";
-import jwt from "jsonwebtoken";
+//import jwt from "jsonwebtoken";
 import getUserByToken from "../helpers/get-user-by-token.js";
 import Turma from "../models/Turma.js";
 import ProfessoresTurmas from "../models/ProfessoresTurmas.js";
+import Disciplina from "../models/Disciplinas.js";
+import Aluno from "../models/Aluno.js";
+import Notas from "../models/Notas.js";
 
 export default class ProfessorController {
   static async getMinhaTurma(req, res) {
@@ -56,6 +59,85 @@ export default class ProfessorController {
     } catch (error) {
       console.log(error);
       return res.status(500).json({ message: "Erro ao buscar turmas." });
+    }
+  }
+
+  static async postNotas(req, res) {
+    const { aluno_id, disciplina_id, bimestre, valor_nota } = req.body;
+
+    // validation
+    if (!aluno_id || !disciplina_id || !bimestre || valor_nota === undefined) {
+      return res
+        .status(422)
+        .json({ message: "Todos os campos são obrigatórios!" });
+    }
+
+    try {
+      const token = getToken(req);
+      const user = await getUserByToken(token);
+
+      if (!user) {
+        return res.status(401).json({ message: "Acesso negado!" });
+      }
+
+      // find professor on db
+      const professor = await Professor.findOne({
+        where: { usuario_id: user.ID },
+      });
+
+      try {
+        const disciplinaProfessor = await Disciplina.findOne({
+          where: {
+            ID: disciplina_id,
+            professor_id: professor.ID,
+          },
+        });
+
+        if (!disciplinaProfessor) {
+          return res.status(401).json({
+            message:
+              "Você não tem permissão para lançar notas nesta disciplina.",
+          });
+        }
+
+        const alunoExiste = await Aluno.findByPk(aluno_id);
+        if (!alunoExiste) {
+          return res.status(404).json({ message: "Aluno não encontrado." });
+        }
+
+        const notaExistente = await Notas.findOne({
+          where: {
+            aluno_id,
+            disciplina_id,
+            bimestre,
+          },
+        });
+
+        if (notaExistente) {
+          return res.status(422).json({
+            message:
+              "Já existe uma nota lançada para este aluno neste bimestre.",
+          });
+        }
+
+        const novaNota = await Notas.create({
+          aluno_id,
+          disciplina_id,
+          bimestre,
+          valor_nota,
+        });
+
+        return res
+          .status(201)
+          .json({ message: "Nota lançada com sucesso!", nota: novaNota });
+      } catch (error) {
+        res.status(500).json({
+          message: "Erro ao encontrar a disciplina referente ao seu cadastro.",
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Erro ao postar nota." });
     }
   }
 }
