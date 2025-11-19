@@ -34,19 +34,25 @@ export default class ProfessorController {
       const minhasTurmas = await ProfessoresTurmas.findAll({
         attributes: [],
         where: {
-          professor_id: professor.ID // substitua pela variável apropriada
+          professor_id: professor.ID, // substitua pela variável apropriada
         },
-        include: [{
-          model: Turma,
-          attributes: ["nome_turma", "ano_letivo"]   
-        }]
+        include: [
+          {
+            model: Turma,
+            attributes: ["nome_turma", "ano_letivo"],
+          },
+        ],
       });
+
+      const turmasEncontradas = minhasTurmas.map((link) => ({
+        nome_turma: link.turma.nome_turma,
+        ano_letivo: link.turma.ano_letivo,
+      }));
 
       // return data
       return res.status(200).json({
-        minhasTurmas
+        turmasEncontradas,
       });
-
     } catch (error) {
       console.log(error);
       return res.status(500).json({ message: "Erro ao buscar turmas." });
