@@ -12,6 +12,7 @@ import ProfessoresTurmas from "../models/ProfessoresTurmas.js";
 import Disciplina from "../models/Disciplinas.js";
 import Aluno from "../models/Aluno.js";
 import Notas from "../models/Notas.js";
+import Frequencia from "../models/Frequencia.js";
 
 export default class ProfessorController {
   static async getMinhaTurma(req, res) {
@@ -136,8 +137,86 @@ export default class ProfessorController {
         });
       }
     } catch (error) {
-      console.log(error);
       return res.status(500).json({ message: "Erro ao postar nota." });
+    }
+  }
+
+  static async lancarFrequencia(req, res) {
+    const { aluno_id, disciplina_id, data, presente } = req.body;
+
+    // validation
+    if (!aluno_id || !disciplina_id || !data || presente === undefined) {
+      return res
+        .status(422)
+        .json({ message: "Todos os campos são obrigatórios!" });
+    }
+
+    try {
+      const token = getToken(req);
+      const user = await getUserByToken(token);
+
+      if (!user) {
+        return res.status(401).json({ message: "Acesso negado!" });
+      }
+
+      // find professor on db
+      const professor = await Professor.findOne({
+        where: { usuario_id: user.ID },
+      });
+
+      try {
+        const disciplinaProfessor = await Disciplina.findOne({
+          where: {
+            ID: disciplina_id,
+            professor_id: professor.ID,
+          },
+        });
+
+        if (!disciplinaProfessor) {
+          return res.status(401).json({
+            message:
+              "Você não tem permissão para lançar frequências nesta disciplina.",
+          });
+        }
+
+        const alunoExiste = await Aluno.findByPk(aluno_id);
+        if (!alunoExiste) {
+          return res.status(404).json({ message: "Aluno não encontrado." });
+        }
+
+        const frequenciaExistente = await Frequencia.findOne({
+          where: {
+            aluno_id,
+            disciplina_id,
+            data,
+          },
+        });
+
+        if (frequenciaExistente) {
+          return res.status(422).json({
+            message:
+              "Já existe uma frequência lançada para este aluno nesta data.",
+          });
+        }
+
+        const novaFrequencia = await Frequencia.create({
+          aluno_id,
+          disciplina_id,
+          data,
+          presente,
+        });
+
+        return res.status(201).json({
+          message: "Frequência lançada com sucesso!",
+          frequencia: novaFrequencia,
+        });
+      } catch (error) {
+        res.status(500).json({
+          message: "Erro ao encontrar a disciplina referente ao seu cadastro.",
+        });
+      }
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao postar frequência." });
     }
   }
 }
