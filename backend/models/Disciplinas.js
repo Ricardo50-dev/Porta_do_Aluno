@@ -37,7 +37,7 @@ Disciplinas.belongsTo(Professores, {
   foreignKey: "professor_id",
 });
 
-Professores.hasMany(Disciplinas, {
+Professores.hasOne(Disciplinas, {
   foreignKey: "professor_id",
 });
 
