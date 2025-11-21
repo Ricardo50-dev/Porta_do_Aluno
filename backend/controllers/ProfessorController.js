@@ -13,6 +13,7 @@ import Disciplina from "../models/Disciplinas.js";
 import Aluno from "../models/Aluno.js";
 import Notas from "../models/Notas.js";
 import Frequencia from "../models/Frequencia.js";
+import Avisos from "../models/Avisos.js";
 
 export default class ProfessorController {
   static async getMinhaTurma(req, res) {
@@ -217,6 +218,51 @@ export default class ProfessorController {
       }
     } catch (error) {
       return res.status(500).json({ message: "Erro ao postar frequência." });
+    }
+  }
+
+  static async lancarAviso(req, res) {
+    const { autor_id, titulo, conteudo, data_postagem } = req.body;
+
+    if (!autor_id || !titulo || !conteudo || !data_postagem) {
+      return res
+        .status(422)
+        .json({ message: "Todos os campos são obrigatórios!" });
+    }
+
+    const autor = await User.findOne({
+      where: { ID: autor_id },
+    });
+
+    if (!autor) {
+      res.status(422).json({ message: "Usuário não encontrado!" });
+      return;
+    }
+
+    const professor = await Professor.findOne({
+      where: { usuario_id: autor.ID },
+    });
+
+    // validation
+    if (!professor) {
+      res.status(422).json({ message: "Professor não encontrado!" });
+      return;
+    }
+
+    try {
+      const novoAviso = await Avisos.create({
+        autor_id,
+        titulo,
+        conteudo,
+        data_postagem,
+      });
+
+      return res.status(201).json({
+        message: "Aviso lançado com sucesso!",
+        frequencia: novoAviso,
+      });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao postar aviso." });
     }
   }
 }
