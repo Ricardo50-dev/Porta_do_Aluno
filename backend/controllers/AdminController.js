@@ -9,6 +9,8 @@ import jwt from "jsonwebtoken";
 import getUserByToken from "../helpers/get-user-by-token.js";
 import Turma from "../models/Turma.js";
 import sequelize from "../db/db.js";
+import Disciplinas from "../models/Disciplinas.js";
+import Professores from "../models/Professores.js";
 
 export default class AdminController {
   static async register(req, res) {
@@ -513,6 +515,124 @@ export default class AdminController {
       res.status(200).json({ message: "Turma removida com sucesso!" });
     } catch (error) {
       Logger.error(`Erro ao remover o Turma no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async createDisciplina(req, res) {
+    const nome_disciplina = req.body.nome;
+    const professor_id = req.body.idprofessor;
+
+    // validations
+    if (!nome_disciplina) {
+      res.status(422).json({ message: "O nome da disciplina é obrigatório!" });
+      return;
+    }
+
+    if (!professor_id) {
+      Logger.error(`Professor ID não identificado!`);
+      res.status(422).json({ message: "Erro ao criar disciplina!" });
+      return;
+    }
+
+    // check if turma exists
+    const professorExists = await Professores.findOne({ where: { ID: professor_id } });
+    if (!professorExists) {
+      res.status(422).json({
+        message: "Professor não encontrado!",
+      });
+      return;
+    }
+
+    const disciplina = new Disciplinas({
+      nome_disciplina: nome_disciplina,
+      professor_id: professor_id,
+    });
+
+    // save turma on db
+    try {
+      const newDisciplina = await disciplina.save();
+      res.json({ message: "A disciplina foi cadastrada com sucesso!" });
+    } catch (error) {
+      Logger.error(`Erro ao criar disciplina no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async selectDisciplina(req, res) {
+    const professor_id = req.body.professor_id
+    if (!professor_id) {
+      res.status(422).json({ message: "Professor não identificado!" });
+      return;
+    }
+    try {
+      const disciplina = await Disciplinas.findAll({ where: { professor_id: professor_id } });
+      res.status(200).json({ disciplina });
+    } catch (error) {
+      Logger.error(`Erro ao encontrar disciplina(s) no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async editDisciplina(req, res) {
+    const discplina_id = req.body.iddisciplina;
+    const nome_disciplina = req.body.nome;
+    const professor_id = req.body.idprofessor;
+
+    if (!discplina_id) {
+      Logger.error(`ID disciplina não identificado ou vazio!`);
+      res.status(422).json({ message: "Erro ao editar disciplina" });
+      return;
+    }
+
+    if (!nome_disciplina) {
+      res.status(422).json({ message: "O nome da disciplina é obrigatório!" });
+      return;
+    }
+
+    if (!professor_id) {
+      Logger.error(`Professor ID não identificado!`);
+      res.status(422).json({ message: "Erro ao criar disciplina!" });
+      return;
+    }
+
+    try {
+      const updateDisciplina = await Disciplinas.update(
+        {
+          nome_disciplina: nome_disciplina,
+          professor_id: professor_id,
+        },
+        {
+          where: { ID: discplina_id },
+        }
+      );
+      res.json({
+        message: "Disciplina atualizada com sucesso!",
+      });
+    } catch (error) {
+      Logger.error(`Erro ao atualizar disciplina no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async deleteDisciplina(req, res) {
+    const id = req.params.id;
+
+    // search for disciplina on db
+    const disciplina = await Disciplinas.findOne({ where: { ID: id } });
+
+    // validation
+    if (!disciplina) {
+      res.status(404).json({ message: "Disciplina não encontrada!" });
+      return;
+    }
+
+    // delete disciplina
+    try {
+      await Disciplinas.destroy({ where: { ID: id } });
+      res.status(200).json({ message: "Disciplina removida com sucesso!" });
+    } catch (error) {
+      Logger.error(`Erro ao remover o Disciplina no banco: ${error}`);
       res.status(500).json({ message: error });
     }
   }
