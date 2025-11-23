@@ -11,5 +11,6 @@ router.get("/me/avisos", ProfessorController.meusAvisos);
 router.post("/nota", ProfessorController.lancarNotas);
 router.post("/frequencia", ProfessorController.lancarFrequencia);
 router.post("/aviso", verifyToken, ProfessorController.lancarAviso);
+router.post("/edit/frequencia", ProfessorController.editFrequencia);
 
 export default router;

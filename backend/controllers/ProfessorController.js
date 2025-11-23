@@ -16,7 +16,7 @@ import Frequencia from "../models/Frequencia.js";
 import Avisos from "../models/Avisos.js";
 
 export default class ProfessorController {
-  // GET FUNCTIONS
+  // LIST FUNCTIONS
   static async minhasTurma(req, res) {
     try {
       const token = getToken(req);
@@ -158,7 +158,7 @@ export default class ProfessorController {
     }
   }
 
-  // POST FUNCTIONS
+  // CREATE FUNCTIONS
   static async lancarFrequencia(req, res) {
     const { aluno_id, disciplina_id, data, presente } = req.body;
 
@@ -358,6 +358,84 @@ export default class ProfessorController {
       });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao postar aviso." });
+    }
+  }
+
+  // EDIT FUNCTIONS
+  static async editFrequencia(req, res) {
+    const { aluno_id, disciplina_id, data, presente } = req.body;
+
+    // validation
+    if (!aluno_id || !disciplina_id || !data || presente === undefined) {
+      return res
+        .status(422)
+        .json({ message: "Todos os campos são obrigatórios!" });
+    }
+
+    try {
+      const token = getToken(req);
+      const user = await getUserByToken(token);
+
+      if (!user) {
+        return res.status(401).json({ message: "Acesso negado!" });
+      }
+
+      const professor = await Professor.findOne({
+        where: { usuario_id: user.ID },
+      });
+
+      const disciplinaProfessor = await Disciplina.findOne({
+        where: {
+          ID: disciplina_id,
+          professor_id: professor.ID,
+        },
+      });
+
+      if (!disciplinaProfessor) {
+        return res.status(401).json({
+          message:
+            "Você não tem permissão para editar frequências nesta disciplina.",
+        });
+      }
+
+      const alunoExiste = await Aluno.findByPk(aluno_id);
+      if (!alunoExiste) {
+        return res.status(404).json({ message: "Aluno não encontrado." });
+      }
+
+      const frequenciaExist = await Frequencia.findOne({
+        where: {
+          aluno_id,
+          disciplina_id,
+          data,
+        },
+      });
+
+      if (frequenciaExist) {
+        //await Frequencia.destroy({ where: aluno_id, disciplina_id, data });
+        const attFrequencia = await Frequencia.update(
+          {
+            aluno_id,
+            disciplina_id,
+            data,
+            presente,
+          },
+          {
+            where: { aluno_id, disciplina_id, data }, // IMPORTANTE: Atualiza pelo id do usuário
+          }
+        );
+        return res.status(201).json({
+          message: "Frequência editada com sucesso!",
+        });
+      }
+
+      return res.status(500).json({
+        message: "Erro ao encontrar frequência.",
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Erro ao encontrar a disciplina referente ao seu cadastro.",
+      });
     }
   }
 }
