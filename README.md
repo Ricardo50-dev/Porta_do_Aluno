@@ -1,4 +1,4 @@
-# Projeto Portal do Aluno (em andamento)
+# Projeto Portal do Aluno (em desenvolvimento)
 
 ### **1. Planejamento e Modelagem**
 
@@ -26,8 +26,8 @@
 
 ### 2. Back-end
 
-- **Endpoints de Autenticação:**
-  - `POST /login`: Recebe email/senha, valida e retorna um Token.
+- **Endpoint de Autenticação:**
+  - `POST /login`:
 - **Endpoints de Aluno:**
   - `GET /me/notas`: Retorna o boletim do aluno logado.
   - `GET /me/frequencia`: Retorna as faltas e presenças.
@@ -41,23 +41,26 @@
   - `POST /materiais`: Faz upload de um novo material de aula.
   - `POST /avisos`: Cria um novo aviso.
 - **Endpoints de Administrador:**
-  - Rotas de **CRUD** para gerenciar:
-    - `POST /usuarios`
-    - `GET /usuarios`
-    - `PATCH /usuarios`
-    - `DELETE /usuarios`
-    - `POST /turmas`
-    - `GET /turmas`
-    - `PATCH /turmas`
-    - `DELETE /turmas`
-    - `POST /disciplinas`
-    - `GET /disciplinas`
-    - `PATCH /disciplinas`
-    - `DELETE /disciplinas`
-    - `POST /matriculas`
-    - `GET /matriculas`
-    - `PATCH /matriculas`
-    - `DELETE /matriculas`
+  - User **CRUD**:
+      - `POST /usuarios`
+      - `GET /usuarios`
+      - `POST /edit/usuario`
+      - `DELETE /usuarios`  
+  -  Turmas **CRUD**:
+      - `POST /turmas`
+      - `GET /turmas`
+      - `POST /edit/turmas`
+      - `DELETE /turmas`  
+  -  Disciplinas **CRUD**:
+      - `POST /disciplinas`
+      - `GET /disciplinas`
+      - `POST /edit/disciplina`
+      - `DELETE /disciplinas`  
+  -  User **CRUD**:
+      - `POST /matriculas`
+      - `GET /matriculas`
+      - `POST /edit/matriculas`
+      - `DELETE /matriculas`
 
 ---
 
@@ -85,7 +88,7 @@ Será uma **Single Page Application (SPA)**.
 
 ### 4. Banco de Dados e Armazenamento
 
-- **Banco de Dados:** Banco de dados relacional (SQL) para armazenar os dados modelados.
+- **Banco de Dados:** Banco de dados relacional (MySQL) para armazenar os dados modelados.
 - **Armazenamento de Arquivos:** Para os "Materiais de Aula" (PDFs, DOCs), os _arquivos_ serão salvos em um serviço de armazenamento de objetos.
 
 ---
@@ -98,6 +101,5 @@ Será uma **Single Page Application (SPA)**.
    - **Amazon RDS:** Serviço de banco de dados gerenciado.
 3. **Frontend (SPA):**
    - **Amazon S3:** O frontend será "buildado" (React, Vue, etc.) e os arquivos estáticos (HTML, CSS, JS) serão armazenados em um bucket S3.
-   - **Amazon CloudFront:** Terá o CloudFront "na frente" do bucket S3. Ele serve como uma CDN, distribui seu site globalmente e, o mais importante, permite que use **HTTPS** facilmente.
 4. **Armazenamento de Arquivos (Uploads dos materiais):**
    - **Amazon S3:** Será um bucket S3 para guardar os materiais de aula. O backend dará permissão temporária para o frontend fazer o upload direto para o S3.
