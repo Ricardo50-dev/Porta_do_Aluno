@@ -9,6 +9,9 @@ import jwt from "jsonwebtoken";
 import getUserByToken from "../helpers/get-user-by-token.js";
 import Turma from "../models/Turma.js";
 import sequelize from "../db/db.js";
+import Disciplinas from "../models/Disciplinas.js";
+import Professores from "../models/Professores.js";
+import Matriculas from "../models/Matriculas.js";
 
 export default class AdminController {
   static async register(req, res) {
@@ -513,6 +516,225 @@ export default class AdminController {
       res.status(200).json({ message: "Turma removida com sucesso!" });
     } catch (error) {
       Logger.error(`Erro ao remover o Turma no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async createDisciplina(req, res) {
+    const nome_disciplina = req.body.nome;
+    const professor_id = req.body.idprofessor;
+
+    // validations
+    if (!nome_disciplina) {
+      res.status(422).json({ message: "O nome da disciplina é obrigatório!" });
+      return;
+    }
+
+    if (!professor_id) {
+      Logger.error(`Professor ID não identificado!`);
+      res.status(422).json({ message: "Erro ao criar disciplina!" });
+      return;
+    }
+
+    // check if turma exists
+    const professorExists = await Professores.findOne({ where: { ID: professor_id } });
+    if (!professorExists) {
+      res.status(422).json({
+        message: "Professor não encontrado!",
+      });
+      return;
+    }
+
+    const disciplina = new Disciplinas({
+      nome_disciplina: nome_disciplina,
+      professor_id: professor_id,
+    });
+
+    // save turma on db
+    try {
+      const newDisciplina = await disciplina.save();
+      res.json({ message: "A disciplina foi cadastrada com sucesso!" });
+    } catch (error) {
+      Logger.error(`Erro ao criar disciplina no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async selectDisciplina(req, res) {
+    const professor_id = req.body.professor_id
+    if (!professor_id) {
+      res.status(422).json({ message: "Professor não identificado!" });
+      return;
+    }
+    try {
+      const disciplina = await Disciplinas.findAll({ where: { professor_id: professor_id } });
+      res.status(200).json({ disciplina });
+    } catch (error) {
+      Logger.error(`Erro ao encontrar disciplina(s) no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async editDisciplina(req, res) {
+    const discplina_id = req.body.iddisciplina;
+    const nome_disciplina = req.body.nome;
+    const professor_id = req.body.idprofessor;
+
+    if (!discplina_id) {
+      Logger.error(`ID disciplina não identificado ou vazio!`);
+      res.status(422).json({ message: "Erro ao editar disciplina" });
+      return;
+    }
+
+    if (!nome_disciplina) {
+      res.status(422).json({ message: "O nome da disciplina é obrigatório!" });
+      return;
+    }
+
+    if (!professor_id) {
+      Logger.error(`Professor ID não identificado!`);
+      res.status(422).json({ message: "Erro ao criar disciplina!" });
+      return;
+    }
+
+    try {
+      const updateDisciplina = await Disciplinas.update(
+        {
+          nome_disciplina: nome_disciplina,
+          professor_id: professor_id,
+        },
+        {
+          where: { ID: discplina_id },
+        }
+      );
+      res.json({
+        message: "Disciplina atualizada com sucesso!",
+      });
+    } catch (error) {
+      Logger.error(`Erro ao atualizar disciplina no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async deleteDisciplina(req, res) {
+    const id = req.params.id;
+
+    // search for disciplina on db
+    const disciplina = await Disciplinas.findOne({ where: { ID: id } });
+
+    // validation
+    if (!disciplina) {
+      res.status(404).json({ message: "Disciplina não encontrada!" });
+      return;
+    }
+
+    // delete disciplina
+    try {
+      await Disciplinas.destroy({ where: { ID: id } });
+      res.status(200).json({ message: "Disciplina removida com sucesso!" });
+    } catch (error) {
+      Logger.error(`Erro ao remover o Disciplina no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async createMatricula(req, res) {
+    const aluno_id = req.body.alunoid;
+    const disciplina_id = req.body.disciplinaid;
+
+    // validations
+    if (!aluno_id) {
+      res.status(422).json({ message: "O aluno a ser matriculado é obrigatório!" });
+      return;
+    }
+
+    if (!disciplina_id) {
+      res.status(422).json({ message: "A disciplina precisa ser selecionado!" });
+      return;
+    }
+
+    // check if aluno exists
+    const alunoExists = await Aluno.findOne({ where: { ID: aluno_id } });
+    if (!alunoExists) {
+      res.status(422).json({
+        message: "Aluno não encontrado!",
+      });
+      return;
+    }
+
+    // check if disciplina exists
+    const disciplinaExists = await Disciplinas.findOne({ where: { ID: disciplina_id } });
+    if (!disciplinaExists) {
+      res.status(422).json({
+        message: "Disciplina não encontrado!",
+      });
+      return;
+    }
+
+    const matricula = new Matriculas({
+      aluno_id: aluno_id,
+      disciplina_id: disciplina_id,
+    });
+
+    // save matricula on db
+    try {
+      const newMatricula = await matricula.save();
+      res.json({ message: "A matricula foi realizada com sucesso!" });
+    } catch (error) {
+      Logger.error(`Erro ao matricular aluno da disciplina, Ou matricula já realizada: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async selectMatriculaDisciplina(req, res) {
+    const disciplina_id = req.body.disciplina_id
+    if (!disciplina_id) {
+      res.status(422).json({ message: "Matricula não identificada!" });
+      return;
+    }
+    try {
+      const alunos_da_disciplina = await Matriculas.findAll({ where: { disciplina_id: disciplina_id } });
+      res.status(200).json({ alunos_da_disciplina });
+    } catch (error) {
+      Logger.error(`Erro ao encontrar alunos matriculados no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async selectMatriculaAluno(req, res) {
+    const aluno_id = req.body.aluno_id
+    if (!aluno_id) {
+      res.status(422).json({ message: "Aluno não identificado!" });
+      return;
+    }
+    try {
+      const disciplinas_do_aluno = await Matriculas.findAll({ where: { aluno_id: aluno_id } });
+      res.status(200).json({ disciplinas_do_aluno });
+    } catch (error) {
+      Logger.error(`Erro ao encontrar disciplina(s) do aluno no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async deleteMatricula(req, res) {
+    const id_aluno = req.params.idaluno;
+    const id_disciplina = req.params.iddisciplina;
+
+    // search for matricula on db
+    const matricula = await Matriculas.findOne({ where: { aluno_id: id_aluno, disciplina_id: id_disciplina } });
+
+    // validation
+    if (!matricula) {
+      res.status(404).json({ message: "Matricula não encontrada!" });
+      return;
+    }
+
+    // delete matricula
+    try {
+      await Matriculas.destroy({ where: { aluno_id: id_aluno, disciplina_id: id_disciplina } });
+      res.status(200).json({ message: "Matricula removida com sucesso!" });
+    } catch (error) {
+      Logger.error(`Erro ao remover o Matricula no banco: ${error}`);
       res.status(500).json({ message: error });
     }
   }
