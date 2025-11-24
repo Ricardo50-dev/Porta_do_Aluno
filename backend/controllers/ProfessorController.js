@@ -413,7 +413,6 @@ export default class ProfessorController {
           },
         });
 
-        ///////////////////
         if (notaExists) {
           const attNotas = await Notas.update(
             {
@@ -519,6 +518,141 @@ export default class ProfessorController {
       res.status(500).json({
         message: "Erro ao encontrar a disciplina referente ao seu cadastro.",
       });
+    }
+  }
+
+  static async editAviso(req, res) {
+    const id = req.params.id;
+
+    const { autor_id, titulo, conteudo, data_postagem } = req.body;
+
+    if (!autor_id || !titulo || !conteudo || !data_postagem) {
+      return res
+        .status(422)
+        .json({ message: "Todos os campos são obrigatórios!" });
+    }
+
+    const autor = await User.findOne({
+      where: { ID: autor_id },
+    });
+
+    if (!autor) {
+      res.status(422).json({ message: "Usuário não encontrado!" });
+      return;
+    }
+
+    const professor = await Professor.findOne({
+      where: { usuario_id: autor.ID },
+    });
+
+    // validation
+    if (!professor) {
+      res.status(422).json({ message: "Professor não encontrado!" });
+      return;
+    }
+
+    const avisoExists = await Avisos.findOne({
+      where: { ID: id },
+    });
+
+    if (!avisoExists) {
+      return res.status(422).json({ message: "Aviso não encontrado." });
+    }
+
+    try {
+      const attAviso = await Avisos.update(
+        {
+          autor_id,
+          titulo,
+          conteudo,
+          data_postagem,
+        },
+        {
+          where: { ID: id },
+        }
+      );
+      if (attAviso == 1) {
+        return res.status(201).json({
+          message: "Aviso editado com sucesso!",
+        });
+      } else {
+        return res.status(500).json({ message: "Erro ao editar aviso." });
+      }
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao editar aviso." });
+    }
+  }
+
+  // DELETE FUNCTIONS
+  static async deleteNota(req, res) {
+    const id = req.params.id;
+
+    const notaExistente = await Notas.findOne({
+      where: {
+        ID: id,
+      },
+    });
+
+    if (!notaExistente) {
+      return res.status(401).json({
+        message: "Nota não existente",
+      });
+    }
+
+    try {
+      await Notas.destroy({ where: { ID: id } });
+      res.status(200).json({ message: "Nota removida com sucesso!" });
+    } catch (error) {
+      Logger.error(`Erro ao remover a nota no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async deleteFrequencia(req, res) {
+    const id = req.params.id;
+
+    const frequenciaExistente = await Frequencia.findOne({
+      where: {
+        ID: id,
+      },
+    });
+
+    if (!frequenciaExistente) {
+      return res.status(401).json({
+        message: "Nota não existente",
+      });
+    }
+
+    try {
+      await Frequencia.destroy({ where: { ID: id } });
+      res.status(200).json({ message: "Frequencia removida com sucesso!" });
+    } catch (error) {
+      Logger.error(`Erro ao remover a frequencia no banco: ${error}`);
+      res.status(500).json({ message: error });
+    }
+  }
+
+  static async deleteAviso(req, res) {
+    const id = req.params.id;
+
+    const avisoExistente = await Avisos.findOne({
+      where: {
+        ID: id,
+      },
+    });
+
+    if (!avisoExistente) {
+      return res.status(401).json({
+        message: "Aviso não existente",
+      });
+    }
+
+    try {
+      await Avisos.destroy({ where: { ID: id } });
+      res.status(200).json({ message: "Aviso removido com sucesso!" });
+    } catch (error) {
+      Logger.error(`Erro ao remover o aviso no banco: ${error}`);
+      res.status(500).json({ message: error });
     }
   }
 }
